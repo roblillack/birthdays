@@ -1,0 +1,110 @@
+using System;
+using System.Console;
+using System.Collections;
+using System.IO;
+
+class birthday : IComparable {
+  public year : short = -1;
+  public month : short = -1;
+  public day : short = -1;
+  public name : string = null;
+
+  public CompareTo(other: object) : int {
+    def md = this.month - (other :> birthday).month;
+    if (md == 0) {
+      def dd = this.day - (other :> birthday).day;
+      if (dd < 0) -1; else if (dd == 0) 0; else 1;
+    } else {
+      if (md < 0) -1; else 1;
+    }
+  }
+
+  public this(input: string) {
+    def split : array[string] = input.Split(null, 4);
+    name = split[3];
+    
+    try { this.year = Convert.ToInt16(split[0]); }
+    catch {| _e is FormatException => { this.year = -1; } }
+    try { this.month = Convert.ToInt16(split[1]); }
+    catch {| _e is FormatException => { this.month = -1; } }
+    try { this.day = Convert.ToInt16(split[2]); }
+    catch {| _e is FormatException => { this.day = -1; } }
+  }
+
+  public printData(whichyear = -1) : void {
+    Write(this.year.ToString("0000;?   "));
+    Write("-");
+    Write(this.month.ToString("00;? "));
+    Write("-");
+    Write(this.day.ToString("00;? "));
+    Write(": ");
+    Write(this.name);
+    unless (whichyear == -1 || this.year == -1) 
+      Write($" ($(whichyear - this.year))");
+    WriteLine();
+  }
+}
+
+mutable terminalwidth = 80;
+/*try {
+  terminalwidth = Convert.ToInt32(Environment.GetEnvironmentVariable("COLUMNS"));
+    WriteLine("ERROR: " + Environment.GetEnvironmentVariable("COLUMNS"));
+} catch {
+  | e is FormatException => {
+    WriteLine("ERROR: " + Environment.GetEnvironmentVariable("COLUMNS"));
+  }
+}
+WriteLine(terminalwidth);*/
+def separator : array[char] = array(terminalwidth);
+for (mutable i = 0; i < terminalwidth; i++)
+  separator[i] = '-';
+//WriteLine(separator);
+
+def datafile = Environment.GetEnvironmentVariable("HOME") + "/birthdays";
+//System.Console.WriteLine(datafile);
+
+def sr = StreamReader(File.OpenRead(datafile));
+def list = ArrayList();
+for (mutable l = sr.ReadLine(); l != null; l = sr.ReadLine())
+  _ = list.Add(birthday(l));
+sr.Close();
+
+def now = DateTime.Now;
+def today = birthday($"$(now.Year) $(now.Month) $(now.Day) \x1b[1m*** TODAY ***");
+_ = list.Add(today);
+
+list.Sort(); //bComparer());
+
+def todayindex = list.BinarySearch(today);
+
+def showbefore = 3;
+def showafter = 5;
+
+// we should show more than we have this year before today
+when (showbefore - todayindex > 0) {
+  for (mutable i = showbefore - todayindex; i > 0; i--)
+    // only show if not longer ago than a year
+    when (list.Count - i > todayindex)
+      (list.Item[list.Count - i] :> birthday).printData(now.Year - 1);
+  WriteLine("-----------");
+}
+
+// all dates from this year that are before today
+for (mutable i = showbefore; i > 0; i--)
+  when (todayindex - i >= 0)
+    (list.Item[todayindex - i] :> birthday).printData(now.Year);
+
+Write("\x1b[3m");
+today.printData();
+Write("\x1b[m");
+
+for (mutable i = 1; i <= showafter; i++)
+  when (todayindex + i < list.Count)
+    (list.Item[todayindex + i] :> birthday).printData(now.Year);
+
+when (todayindex + showafter >= list.Count) {
+  WriteLine("-----------");
+  for (mutable i = 0; i < (todayindex + showafter) - list.Count; i++)
+    when (i < todayindex)
+      (list.Item[i] :> birthday).printData(now.Year + 1);
+}
