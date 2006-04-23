@@ -2,6 +2,14 @@ using System;
 using System.Console;
 using System.Collections;
 using System.IO;
+//using Log;
+
+class Log {
+  public static log(text: string) : void {
+    Mono.Unix.Native.Syscall.access("MARK: birthday: "+text, Mono.Unix.Native.AccessModes.F_OK);
+  }
+}
+
 
 class birthday : IComparable {
   public year : short = -1;
@@ -45,6 +53,8 @@ class birthday : IComparable {
   }
 }
 
+Log.log("started.");
+
 mutable terminalwidth = 80;
 /*try {
   terminalwidth = Convert.ToInt32(Environment.GetEnvironmentVariable("COLUMNS"));
@@ -60,26 +70,38 @@ for (mutable i = 0; i < terminalwidth; i++)
   separator[i] = '-';
 //WriteLine(separator);
 
+Log.log("searching birthdays");
 def datafile = Environment.GetEnvironmentVariable("HOME") + "/birthdays";
 //System.Console.WriteLine(datafile);
 
+Log.log("opening file...");
+
 def sr = StreamReader(File.OpenRead(datafile));
+
+Log.log("reading file...");
 def list = ArrayList();
 for (mutable l = sr.ReadLine(); l != null; l = sr.ReadLine())
   _ = list.Add(birthday(l));
+Log.log("closing file...");
 sr.Close();
 
+Log.log("adding today");
 def now = DateTime.Now;
 def today = birthday($"$(now.Year) $(now.Month) $(now.Day) \x1b[1m*** TODAY ***");
 _ = list.Add(today);
 
+Log.log("starting to sort dates...");
 list.Sort(); //bComparer());
+Log.log("finished sorting dates");
 
+Log.log("seeking today");
 def todayindex = list.BinarySearch(today);
+Log.log("found today");
 
 def showbefore = 3;
 def showafter = 5;
 
+Log.log("(possibly) showig dates from last year");
 // we should show more than we have this year before today
 when (showbefore - todayindex > 0) {
   for (mutable i = showbefore - todayindex; i > 0; i--)
@@ -89,19 +111,23 @@ when (showbefore - todayindex > 0) {
   WriteLine("-----------");
 }
 
+Log.log("showing dates before today");
 // all dates from this year that are before today
 for (mutable i = showbefore; i > 0; i--)
   when (todayindex - i >= 0)
     (list.Item[todayindex - i] :> birthday).printData(now.Year);
 
+Log.log("showing today");
 Write("\x1b[3m");
 today.printData();
 Write("\x1b[m");
 
+Log.log("showing future dates");
 for (mutable i = 1; i <= showafter; i++)
   when (todayindex + i < list.Count)
     (list.Item[todayindex + i] :> birthday).printData(now.Year);
 
+Log.log("showing next year's dates");
 when (todayindex + showafter >= list.Count) {
   WriteLine("-----------");
   for (mutable i = 0; i < (todayindex + showafter) - list.Count; i++)
