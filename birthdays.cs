@@ -10,10 +10,10 @@ class Log {
 }
 
 class birthday : IComparable {
-  public short year = -1;
-  public short month = -1;
-  public short day = -1;
-  public string name = null;
+  private int year = -1;
+  private int month = -1;
+  private int day = -1;
+  private string name = null;
 
   public int CompareTo(object other) {
     int delta = this.month - ((birthday)other).month;
@@ -42,21 +42,25 @@ class birthday : IComparable {
     catch (FormatException e) { this.day = -1; }
   }
 
+  public birthday(DateTime when, string who) {
+    this.year = when.Year;
+    this.month = when.Month;
+    this.day = when.Day;
+    this.name = who;
+  }
+
   public void printData() {
     this.printData(-1);
   }
 
   public void printData(int whichyear) {
-    Console.Write(this.year.ToString("0000;?   "));
-    Console.Write("-");
-    Console.Write(this.month.ToString("00;? "));
-    Console.Write("-");
-    Console.Write(this.day.ToString("00;? "));
-    Console.Write(": ");
-    Console.Write(this.name);
-    if (whichyear != -1 && this.year != -1)
-      Console.Write(" (" + (whichyear - this.year) + ")");
-    Console.WriteLine();
+    Console.WriteLine("{0}-{1}-{2}: {3}{4}",
+                      this.year.ToString("0000;?   "),
+                      this.month.ToString("00;? "),
+                      this.day.ToString("00;? "),
+                      this.name,
+                      (whichyear != -1 && this.year != -1) ?
+                      " (" + (whichyear - this.year) + ")" : "");
   }
 }
 
@@ -80,7 +84,7 @@ public class birthdays {
 
     Log.log("adding today");
     DateTime now = DateTime.Now;
-    birthday today = new birthday(now.Year + " " + now.Month + " " + now.Day + " \x1b[1m*** TODAY ***");
+    birthday today = new birthday(now, "\x1b[1m*** TODAY ***");
     list.Add(today);
 
     Log.log("starting to sort dates...");
