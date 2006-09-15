@@ -2,13 +2,6 @@ using System;
 using System.Collections;
 using System.IO;
 
-class Log {
-  //private static starttime : DateTime = DateTime.Now;
-  public static void log(string text) {
-    //WriteLine("LOG " + ((DateTime.Now - Log.starttime) :> TimeSpan).ToString() + ": " + text);
-  }
-}
-
 class birthday : IComparable {
   private int year = -1;
   private int month = -1;
@@ -66,39 +59,23 @@ class birthday : IComparable {
 
 public class birthdays {
   public static void Main(string[] args) {
-    Log.log("started.");
-    Log.log("searching birthdays");
     string datafile = Environment.GetEnvironmentVariable("HOME") + "/birthdays";
-    //System.Console.WriteLine(datafile);
-
-    Log.log("opening file...");
 
     StreamReader sr = new StreamReader(File.OpenRead(datafile));
 
-    Log.log("reading file...");
     ArrayList list = new ArrayList();
     for (string l = sr.ReadLine(); l != null; l = sr.ReadLine())
       list.Add(new birthday(l));
-    Log.log("closing file...");
     sr.Close();
 
-    Log.log("adding today");
     DateTime now = DateTime.Now;
     birthday today = new birthday(now, "\x1b[1m*** TODAY ***");
     list.Add(today);
-
-    Log.log("starting to sort dates...");
     list.Sort(); //bComparer());
-    Log.log("finished sorting dates");
-
-    Log.log("seeking today");
     int todayindex = list.BinarySearch(today);
-    Log.log("found today");
-
     int showbefore = 3;
     int showafter = 5;
 
-    Log.log("(possibly) showing dates from last year");
     // we should show more than we have this year before today
     if (showbefore - todayindex > 0) {
       for (int i = showbefore - todayindex; i > 0; i--)
@@ -108,23 +85,19 @@ public class birthdays {
       Console.WriteLine("-----------");
     }
 
-    Log.log("showing dates before today");
     // all dates from this year that are before today
     for (int i = showbefore; i > 0; i--)
       if (todayindex - i >= 0)
         ((birthday)list[todayindex - i]).printData(now.Year);
 
-    Log.log("showing today");
     Console.Write("\x1b[3m");
     today.printData();
     Console.Write("\x1b[m");
 
-    Log.log("showing future dates");
     for (int i = 1; i <= showafter; i++)
       if (todayindex + i < list.Count)
         ((birthday)list[todayindex + i]).printData(now.Year);
 
-    Log.log("showing next year's dates");
     if (todayindex + showafter >= list.Count) {
       Console.WriteLine("-----------");
       for (int i = 0; i < (todayindex + showafter) - list.Count; i++)
