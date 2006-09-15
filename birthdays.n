@@ -5,11 +5,11 @@ using System.IO;
 //using Log;
 
 class Log {
+  //private static starttime : DateTime = DateTime.Now;
   public static log(text: string) : void {
-    Mono.Unix.Native.Syscall.access("MARK: birthday: "+text, Mono.Unix.Native.AccessModes.F_OK);
+    //WriteLine("LOG " + ((DateTime.Now - Log.starttime) :> TimeSpan).ToString() + ": " + text);
   }
 }
-
 
 class birthday : IComparable {
   public year : short = -1;
@@ -21,10 +21,15 @@ class birthday : IComparable {
     def md = this.month - (other :> birthday).month;
     if (md == 0) {
       def dd = this.day - (other :> birthday).day;
-      if (dd < 0) -1; else if (dd == 0) 0; else 1;
-    } else {
-      if (md < 0) -1; else 1;
-    }
+      if (dd == 0) {
+        def yd = this.year - (other :> birthday).year;
+        if (yd == 0) {
+          this.name.CompareTo((other :> birthday).name);
+        } else {
+          -yd; // youngest first (and therefore *today* at the top)
+        }
+      } else dd;
+    } else md;
   }
 
   public this(input: string) {
@@ -54,22 +59,6 @@ class birthday : IComparable {
 }
 
 Log.log("started.");
-
-mutable terminalwidth = 80;
-/*try {
-  terminalwidth = Convert.ToInt32(Environment.GetEnvironmentVariable("COLUMNS"));
-    WriteLine("ERROR: " + Environment.GetEnvironmentVariable("COLUMNS"));
-} catch {
-  | e is FormatException => {
-    WriteLine("ERROR: " + Environment.GetEnvironmentVariable("COLUMNS"));
-  }
-}
-WriteLine(terminalwidth);*/
-def separator : array[char] = array(terminalwidth);
-for (mutable i = 0; i < terminalwidth; i++)
-  separator[i] = '-';
-//WriteLine(separator);
-
 Log.log("searching birthdays");
 def datafile = Environment.GetEnvironmentVariable("HOME") + "/birthdays";
 //System.Console.WriteLine(datafile);
@@ -101,7 +90,7 @@ Log.log("found today");
 def showbefore = 3;
 def showafter = 5;
 
-Log.log("(possibly) showig dates from last year");
+Log.log("(possibly) showing dates from last year");
 // we should show more than we have this year before today
 when (showbefore - todayindex > 0) {
   for (mutable i = showbefore - todayindex; i > 0; i--)
