@@ -24,9 +24,11 @@ int main (int argc, const char * argv[]) {
 			[list addObject: b];
 		}
 	}
+	
+	id todayString = isatty(1) ? @"\x1b[1m*** TODAY ***\x1b[m" : @"*** TODAY ***";
 
 	id today = [Birthday birthdayWithDate: [NSDate date]
-									 name: @"\x1b[1m*** TODAY ***\x1b[m"];
+									 name: todayString];
 	[list addObject: today];
 	[list sortUsingSelector: @selector(compare:)];
 	
@@ -49,7 +51,7 @@ int main (int argc, const char * argv[]) {
 	}
 	
 	printBirthdays(list, idx_today - before - 1, idx_today - 1, [today year]);
-	[today outputReverseVideo: YES];
+	[today outputReverseVideo: isatty(1)];
 	printBirthdays(list, idx_today + 1, idx_today + after + 1, [today year]);
 	
 	// next year
