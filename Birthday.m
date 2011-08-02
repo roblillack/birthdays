@@ -44,9 +44,7 @@
 		return nil;
 	}
 	
-	return [Birthday birthdayWithYear: [birth yearOfCommonEra]
-								month: [birth monthOfYear]
-								  day: [birth dayOfMonth]
+	return [Birthday birthdayWithDate: birth
 								 name: nameString];	
 }
 
