@@ -13,12 +13,26 @@ void printBirthdays(NSArray *list, long first, long last, NSUInteger year) {
 	}
 }
 
+
+extern void _NSSetLogCStringFunction(void(*)(const char*, unsigned, BOOL));
+
+static void noLog(const char *message, unsigned length,
+                   BOOL withSyslogBanner) {
+    // nothing.
+}
+
 void listBirthdays(CNContactStore *store) {
+    // Disabling this, because notorious:
+    // 2022-01-31 21:51:40.693 birthdays[19298:198948] XXX: countOfStores: 1, countOfAccounts: 1
+    _NSSetLogCStringFunction(noLog);
+
     NSMutableArray *list = [[NSMutableArray alloc] init];
     
     NSArray *keys = @[CNContactFamilyNameKey, CNContactNicknameKey, CNContactGivenNameKey, CNContactBirthdayKey];
 
-    for (id contact in [store unifiedContactsMatchingPredicate:[CNContact predicateForContactsInContainerWithIdentifier:store.defaultContainerIdentifier] keysToFetch:keys error:NULL]) {
+    id predicate = [CNContact predicateForContactsInContainerWithIdentifier:store.defaultContainerIdentifier];
+    
+    for (id contact in [store unifiedContactsMatchingPredicate:predicate keysToFetch:keys error:NULL]) {
         Birthday *b = [Birthday birthdayWithContact: contact];
         if (b) {
             [list addObject: b];
@@ -65,8 +79,8 @@ void listBirthdays(CNContactStore *store) {
 int main (int argc, const char * argv[]) {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
-    CNContactStore *store = [CNContactStore new];
-    
+    CNContactStore *store = [[CNContactStore alloc] init];
+
     [store requestAccessForEntityType:CNEntityTypeContacts completionHandler:^(BOOL granted, NSError * _Nullable error) {
         if (granted == YES) {
             listBirthdays(store);
