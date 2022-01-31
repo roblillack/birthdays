@@ -1,5 +1,5 @@
 #import <Cocoa/Cocoa.h>
-#import <AddressBook/AddressBook.h>
+#import <Contacts/Contacts.h>
 
 @interface Birthday : NSObject {
 	NSString *name;
@@ -19,7 +19,7 @@
 						   day: (NSUInteger) d
 						  name: (NSString*) n;
 
-+ (Birthday*) birthdayWithPerson: (ABPerson*) p;
++ (Birthday*) birthdayWithContact: (CNContact*) c;
 
 + (Birthday*) birthdayWithDate: (NSDate*) d
 						  name: (NSString*) n;

@@ -15,42 +15,38 @@
     return [bday autorelease];
 }
 
-+ (Birthday*) birthdayWithPerson: (ABPerson*) p {
-	NSString *nameString = @"";
-	
-	NSString *first = [p valueForProperty: kABFirstNameProperty];
-	if ([first length] > 0) {
-		nameString = [nameString stringByAppendingString: first];
-	}
-	
-	NSString *nickname = [p valueForProperty: kABNicknameProperty];
-	if ([nickname length] > 0) {
-		nameString = [nameString stringByAppendingFormat: @" ‘%@’", nickname];
-	}
-	
-	if ([nameString length] > 0) {
-		nameString = [nameString stringByAppendingString: @" "];
-	}
-	
-	NSString *last = [p valueForProperty: kABLastNameProperty];
-	if ([last length] > 0) {
-		nameString = [nameString stringByAppendingString: last];
-	}
-	
-	// TODO: company code missing
-	id birth = [p valueForProperty: kABBirthdayProperty];
-	
-	if (!birth) {
-		return nil;
-	}
-	
-	return [Birthday birthdayWithDate: birth
-								 name: nameString];	
++ (Birthday*) birthdayWithContact: (CNContact*) c {
+    NSString *nameString = @"";
+    
+    NSString *first = c.givenName;
+    if ([first length] > 0) {
+        nameString = [nameString stringByAppendingString: first];
+    }
+    
+    NSString *nickname = c.nickname;
+    if ([nickname length] > 0) {
+        nameString = [nameString stringByAppendingFormat: @" ‘%@’", nickname];
+    }
+    
+    if ([nameString length] > 0) {
+        nameString = [nameString stringByAppendingString: @" "];
+    }
+    
+    NSString *last = c.familyName;
+    if ([last length] > 0) {
+        nameString = [nameString stringByAppendingString: last];
+    }
+    
+    if (!c.birthday) {
+        return nil;
+    }
+    
+    return [Birthday birthdayWithYear:c.birthday.year month:c.birthday.month day:c.birthday.day name:nameString];
 }
 
 + (Birthday*) birthdayWithDate: (NSDate*) d
 						  name: (NSString*) n {
-	NSDateComponents *components = [[NSCalendar currentCalendar] components:NSDayCalendarUnit | NSMonthCalendarUnit | NSYearCalendarUnit
+	NSDateComponents *components = [[NSCalendar currentCalendar] components:NSCalendarUnitDay | NSCalendarUnitMonth | NSCalendarUnitYear
 																   fromDate: d];
 	
 	return [Birthday birthdayWithYear: [components year]
@@ -59,9 +55,9 @@
 								 name: n];
 }
 
-- (id) initWithYear: (NSUInteger) y
-			  month: (NSUInteger) m
-				day: (NSUInteger) d
+- (id) initWithYear: (unsigned long) y
+			  month: (unsigned long) m
+				day: (unsigned long) d
 			   name: (NSString*) n {
     if (self = [super init]) {
 		year = y;
@@ -73,18 +69,18 @@
 }
 
 - (NSString*) description {
-	return [NSString stringWithFormat: @"%04u-%02u-%02u %@", year, month, day, name];
+	return [NSString stringWithFormat: @"%04lu-%02lu-%02lu %@", year, month, day, name];
 }
 
-- (NSString*) descriptionWithAgeIn: (NSUInteger) age_in_year {
+- (NSString*) descriptionWithAgeIn: (unsigned long) age_in_year {
 	NSString *age;
 	if (year > 0 && age_in_year > 0) {
-		age = [NSString stringWithFormat: @" (%u)", age_in_year - year];
+		age = [NSString stringWithFormat: @" (%lu)", age_in_year - year];
 	} else {
 		age = @"";
 	}
 	
-	return [NSString stringWithFormat: @"%04u-%02u-%02u %@%@", year, month, day, name, age];
+	return [NSString stringWithFormat: @"%04lu-%02lu-%02lu %@%@", year, month, day, name, age];
 }
 
 - (void) outputWithAgeIn: (NSUInteger) age_in_year
@@ -110,6 +106,10 @@
 }
 
 - (NSComparisonResult) compare: (Birthday*) o {
+    if (o == NULL) {
+        return NSOrderedAscending;
+    }
+    
 	if (month > o->month) {
 		return NSOrderedDescending;
 	} else if (month < o->month) {
