@@ -1,4 +1,5 @@
 use chrono::{Datelike, Local, NaiveDate};
+use std::cmp::{max, min};
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
@@ -128,20 +129,19 @@ fn main() {
     let pos = bdays.binary_search(&Birthday::today()).unwrap() as i32;
     let len = bdays.len() as i32;
     let now = Local::now().naive_local().date();
+    let begin = max(pos - len + 1, pos - 3);
+    let end = min(pos + len, pos + 7);
 
-    for i in (pos - 3)..(pos + 7) {
+    for i in begin..end {
         let (idx, year) = match i {
             i if i < 0 => (len + i, now.year() - 1),
             i if i >= len => (i - len, now.year() + 1),
             _ => (i, now.year()),
         };
-        if i == 0 {
+        if idx == 0 && i > begin {
             println!("----------");
         }
         println!("{}", bdays[idx as usize].to_string_for_year(year));
-        if i == len - 1 {
-            println!("----------");
-        }
     }
 }
 
