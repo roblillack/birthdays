@@ -16,12 +16,9 @@ impl Birthday {
     fn from(s: &str) -> Self {
         let mut iter = s.split_ascii_whitespace();
         let (year, month, day, name) = (
-            match iter.next().unwrap().to_string().parse::<u16>() {
-                Ok(y) => Some(y),
-                Err(_) => None,
-            },
-            iter.next().unwrap().to_string().parse::<u8>().unwrap(),
-            iter.next().unwrap().to_string().parse::<u8>().unwrap(),
+            iter.next().unwrap().parse::<u16>().ok(),
+            iter.next().unwrap().parse::<u8>().unwrap(),
+            iter.next().unwrap().parse::<u8>().unwrap(),
             String::from(iter.fold(String::new(), |a, b| a + b + " ").trim()),
         );
         Birthday {
