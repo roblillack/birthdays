@@ -1,5 +1,6 @@
 use chrono::{Datelike, Local, NaiveDate};
 use std::cmp::{max, min};
+use std::error::Error;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
@@ -13,20 +14,24 @@ struct Birthday {
 }
 
 impl Birthday {
-    fn from(s: &str) -> Self {
+    fn from(s: &str) -> Result<Self, Box<dyn Error>> {
         let mut iter = s.split_ascii_whitespace();
+
         let (year, month, day, name) = (
-            iter.next().unwrap().parse::<u16>().ok(),
-            iter.next().unwrap().parse::<u8>().unwrap(),
-            iter.next().unwrap().parse::<u8>().unwrap(),
+            iter.next().ok_or("Missing year")?.parse::<u16>().ok(),
+            iter.next().ok_or("Missing month")?.parse::<u8>()?,
+            iter.next().ok_or("Missing day")?.parse::<u8>()?,
             String::from(iter.fold(String::new(), |a, b| a + b + " ").trim()),
         );
-        Birthday {
+        if name.len() < 1 {
+            return Err("Missing name".into());
+        }
+        Ok(Birthday {
             month,
             day,
             year,
             name,
-        }
+        })
     }
 
     fn today() -> Self {
@@ -75,6 +80,8 @@ mod tests {
     #[test]
     fn it_parses() {
         let bday = Birthday::from("1990 12 31 John Doe");
+        assert!(bday.is_ok());
+        let bday = bday.unwrap();
         assert_eq!(bday.month, 12);
         assert_eq!(bday.day, 31);
         assert_eq!(bday.year, Some(1990));
@@ -82,8 +89,17 @@ mod tests {
     }
 
     #[test]
+    fn it_handles_parse_errors_gracefully() {
+        assert!(Birthday::from("1990 sh 31 John Doe").is_err());
+        assert!(Birthday::from("1990 2387 31 John Doe").is_err());
+        assert!(Birthday::from("1990 01 01").is_err());
+    }
+
+    #[test]
     fn it_parses_entries_without_year() {
         let bday = Birthday::from("???? 12 24 Jesus Christ");
+        assert!(bday.is_ok());
+        let bday = bday.unwrap();
         assert_eq!(bday.month, 12);
         assert_eq!(bday.day, 24);
         assert_eq!(bday.year, None);
@@ -93,12 +109,16 @@ mod tests {
     #[test]
     fn it_calculates_age() {
         let bday = Birthday::from("1981 10 08 Rob Lillack");
+        assert!(bday.is_ok());
+        let bday = bday.unwrap();
         assert_eq!(bday.to_string_for_year(2023), "1981-10-08 Rob Lillack (42)");
     }
 
     #[test]
     fn it_skips_calculating_age_for_entries_without_years() {
         let bday = Birthday::from("???? 12 24 Jesus Christ");
+        assert!(bday.is_ok());
+        let bday = bday.unwrap();
         assert_eq!(bday.to_string_for_year(2023), "xxxx-12-24 Jesus Christ");
     }
 }
@@ -110,7 +130,9 @@ fn read_birthdays() -> Vec<Birthday> {
     if let Ok(lines) = read_lines(filename) {
         for line in lines {
             if let Ok(ip) = line {
-                birthdays.push(Birthday::from(&ip));
+                if let Ok(bday) = Birthday::from(&ip) {
+                    birthdays.push(bday);
+                }
             }
         }
     }
